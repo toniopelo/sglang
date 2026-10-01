@@ -69,7 +69,7 @@ fn router(
     let tokenizers = Arc::new(TokenizerRegistry::load_from_config(&cfg).unwrap());
     let proxy = Arc::new(Proxy::new(Duration::from_secs(5)).unwrap());
     let mut ctx = AppContext::new(cfg, tokenizers, proxy, registry, policies);
-    ctx.radix_tree_prefix_provider = Some(RadixTreePrefixProvider::new(tree, oracle));
+    ctx.dp_rank_prefix_provider = Some(RadixTreePrefixProvider::new(tree, oracle));
     build_router(Arc::new(ctx))
 }
 
@@ -164,10 +164,14 @@ async fn pd_room_maps_decode_to_the_prefill_rank() {
 }
 
 #[tokio::test]
-async fn cache_aware_picks_the_rank_with_the_deepest_prefix() {
+async fn any_policy_picks_the_rank_with_the_deepest_prefix() {
     let worker = MockWorker::start(vec![]).await;
     let mut cfg = config();
     cfg.model.dp_aware = true;
+    // Neither the policy nor input_ids forwarding asks for tokens.
+    cfg.model.policy = PolicyKind::PowerOfTwo;
+    cfg.model.cache_aware = None;
+    cfg.model.disable_input_ids_forwarding = true;
     let tokenizers = TokenizerRegistry::load_from_config(&cfg).unwrap();
     let tokens = request_tokens_for(&tokenizers, &ModelId(MODEL.into()), &body()).unwrap();
     let hashes = compute_block_hashes(&tokens.ids, 1);

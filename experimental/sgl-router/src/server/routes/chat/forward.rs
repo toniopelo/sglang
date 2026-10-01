@@ -193,7 +193,7 @@ fn prompt_dp_rank(
         .into_iter()
         .flatten()
         .find_map(|name| nonempty_header(headers, name));
-    let prefix_depths = match (key, &ctx.radix_tree_prefix_provider, &request.tokens) {
+    let prefix_depths = match (key, &ctx.dp_rank_prefix_provider, &request.tokens) {
         (None, Some(provider), Some(tokens)) => provider.rank_depths(&tokens.ids, &worker.url),
         _ => Vec::new(),
     };
